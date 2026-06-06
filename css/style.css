@@ -326,11 +326,6 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.word-bank h3 {
-    margin-bottom: 1rem;
-    color: var(--space-blue);
-}
-
 .word-item {
     background: linear-gradient(135deg, var(--mint-green) 0%, #05b88b 100%);
     color: var(--white);
@@ -432,16 +427,63 @@ body {
     color: var(--space-blue);
 }
 
-.mini-map {
-    background: linear-gradient(135deg, var(--space-blue) 0%, #16213e 100%);
+/* NEW: Mini map grid styles */
+.map-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    padding: 15px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border-radius: 10px;
-    padding: 1rem;
-    color: var(--white);
-    font-family: monospace;
-    min-height: 200px;
+    position: relative;
+    min-height: 250px;
+}
+
+.map-building {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.map-building:hover {
+    transform: scale(1.05);
+}
+
+.map-icon {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+.map-label {
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.map-street {
+    position: absolute;
+    left: 5%;
+    width: 90%;
+    height: 2px;
+    background: rgba(255,255,255,0.3);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.7rem;
+}
+
+.map-legend {
+    margin-top: 10px;
+    text-align: center;
+    color: #888;
 }
 
 .question-container {
