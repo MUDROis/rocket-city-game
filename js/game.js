@@ -7,24 +7,37 @@ const gameState = {
     stage1Completed: false,
     stage2Completed: false,
     stage3Completed: false,
-    currentQuestion: 0
+    currentQuestion: 0,
+    maxUnlockedStage: 1  // для переключения по клику
 };
 
-// ===== STAGE 2: VRAI/FAUX QUESTIONS (based on Twinklville map) =====
-const vraiFauxQuestions = [
-    { text: "Le parc est à côté de la gare SNCF.", isTrue: true, correction: "" },
-    { text: "Il y a une usine entre le stade et la mosquée.", isTrue: true, correction: "" },
-    { text: "Il n’y a pas de centre sportif à Twinklville.", isTrue: false, correction: "Il y a un centre sportif à Twinklville." },
-    { text: "Le stade est en face de la poste.", isTrue: true, correction: "" },
-    { text: "La banque est à gauche de l’hôtel.", isTrue: false, correction: "La banque est à droite de l’hôtel. (L’hôtel est à gauche de la banque.)" },
-    { text: "Le commissariat de police est à droite de l’église.", isTrue: true, correction: "" },
-    { text: "L’office de tourisme n’est pas loin du stade.", isTrue: true, correction: "" },
-    { text: "L’église est à côté de la patinoire.", isTrue: false, correction: "L’église est à côté du commissariat." },
-    { text: "Il y a une bibliothèque à Twinklville.", isTrue: false, correction: "Il n’y a pas de bibliothèque à Twinklville." },
-    { text: "L’usine est en face du cinéma.", isTrue: true, correction: "" }
+// ===== STAGE 1: VOCABULARY (based on Stage 2 map – Paris/Twinklville) =====
+const parisBuildings = [
+    { icon: '🌳', label: 'Park', building: 'parc', french: 'le parc' },
+    { icon: '🚆', label: 'Train Station', building: 'gare', french: 'la gare SNCF' },
+    { icon: '🎬', label: 'Cinema', building: 'cinema', french: 'le cinéma' },
+    { icon: '📮', label: 'Post Office', building: 'poste', french: 'la poste' },
+    { icon: '🚓', label: 'Police Station', building: 'commissariat', french: 'le commissariat' },
+    { icon: '⛪', label: 'Church', building: 'eglise', french: "l'église" },
+    { icon: '🏟️', label: 'Stadium', building: 'stade', french: 'le stade' },
+    { icon: '🏦', label: 'Bank', building: 'banque', french: 'la banque' }
 ];
 
-// ===== STAGE 3: MAP LOCATIONS (Paris coordinates) =====
+// ===== STAGE 2: VRAI/FAUX QUESTIONS (with English hints) =====
+const vraiFauxQuestions = [
+    { text: "Le parc est à côté de la gare SNCF.", english: "The park is next to the SNCF train station.", isTrue: true, correction: "" },
+    { text: "Il y a une usine entre le stade et la mosquée.", english: "There is a factory between the stadium and the mosque.", isTrue: true, correction: "" },
+    { text: "Il n’y a pas de centre sportif à Paris.", english: "There is no sports centre in Paris.", isTrue: false, correction: "Il y a un centre sportif à Paris." },
+    { text: "Le stade est en face de la poste.", english: "The stadium is opposite the post office.", isTrue: true, correction: "" },
+    { text: "La banque est à gauche de l’hôtel.", english: "The bank is to the left of the hotel.", isTrue: false, correction: "La banque est à droite de l’hôtel. (L’hôtel est à gauche de la banque.)" },
+    { text: "Le commissariat de police est à droite de l’église.", english: "The police station is to the right of the church.", isTrue: true, correction: "" },
+    { text: "L’office de tourisme n’est pas loin du stade.", english: "The tourist office is not far from the stadium.", isTrue: true, correction: "" },
+    { text: "L’église est à côté de la patinoire.", english: "The church is next to the ice rink.", isTrue: false, correction: "L’église est à côté du commissariat." },
+    { text: "Il y a une bibliothèque à Paris.", english: "There is a library in Paris.", isTrue: false, correction: "Il n’y a pas de bibliothèque à Paris." },
+    { text: "L’usine est en face du cinéma.", english: "The factory is opposite the cinema.", isTrue: true, correction: "" }
+];
+
+// ===== STAGE 3: DIALOGUES (5 locations in Paris) =====
 const mapLocations = [
     {
         name: 'La Boulangerie',
@@ -39,7 +52,7 @@ const mapLocations = [
     },
     {
         name: 'La Gare',
-        french: 'la gare',
+        french: 'la gare SNCF',
         lat: 48.8809,
         lng: 2.3553,
         dialogue: {
@@ -58,6 +71,28 @@ const mapLocations = [
             answer: 'Le parc est au sud. Allez tout droit!',
             correct: 'Super, merci!'
         }
+    },
+    {
+        name: 'Le Musée du Louvre',
+        french: 'le musée du Louvre',
+        lat: 48.8606,
+        lng: 2.3376,
+        dialogue: {
+            ask: 'Pardon, où se trouve le musée du Louvre?',
+            answer: 'Le Louvre est dans le 1er arrondissement. Prenez la rue de Rivoli.',
+            correct: 'Merci infiniment!'
+        }
+    },
+    {
+        name: 'Notre-Dame',
+        french: 'la cathédrale Notre-Dame',
+        lat: 48.8530,
+        lng: 2.3499,
+        dialogue: {
+            ask: 'Excusez-moi, comment aller à Notre-Dame?',
+            answer: 'Notre-Dame est sur l\'île de la Cité. Traversez le pont.',
+            correct: 'C\'est parfait, merci!'
+        }
     }
 ];
 
@@ -65,46 +100,70 @@ let map;
 let markers = [];
 let currentMapLocation = 0;
 
-// ===== INIT =====
+// ===== SPEECH SYNTHESIS =====
+function speakFrench(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-FR';
+        utterance.rate = 0.8;
+        window.speechSynthesis.cancel(); // avoid overlapping
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+// ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('stage1')) {
         initStage1();
-        initStage2();
+        initStage2(); // prepares data but map shown only when stage2 active
         updateScore(0);
+        attachStageClickHandlers();
     }
 });
 
-// ===== STAGE 1 (unchanged, already correct) =====
+// ===== CLICK ON STAGE INDICATORS =====
+function attachStageClickHandlers() {
+    const dots = document.querySelectorAll('.stage-dot');
+    dots.forEach((dot, idx) => {
+        const stageNum = idx + 1;
+        dot.addEventListener('click', () => {
+            if (stageNum <= gameState.maxUnlockedStage) {
+                goToStage(stageNum);
+            } else {
+                showFeedback('stage1Feedback', `Complete Stage ${gameState.maxUnlockedStage} first! 🔒`, 'error');
+                setTimeout(() => {
+                    const fb = document.getElementById('stage1Feedback');
+                    if (fb) fb.classList.remove('show');
+                }, 1500);
+            }
+        });
+    });
+}
+
+// ===== STAGE 1 =====
 function initStage1() {
     const wordBank = document.getElementById('wordBank');
     const cityMap = document.getElementById('cityMap');
+    wordBank.innerHTML = '';
+    cityMap.innerHTML = '';
     
-    const buildings = [
-        { icon: '🎬', label: 'Cinema', building: 'cinema', french: 'le cinéma' },
-        { icon: '🚆', label: 'Train Station', building: 'gare', french: 'la gare' },
-        { icon: '🛒', label: 'Supermarket', building: 'supermarche', french: 'le supermarché' },
-        { icon: '🥖', label: 'Bakery', building: 'boulangerie', french: 'la boulangerie' },
-        { icon: '🌳', label: 'Park', building: 'parc', french: 'le parc' },
-        { icon: '🚓', label: 'Police Station', building: 'police', french: 'le poste de police' },
-        { icon: '📚', label: 'Library', building: 'bibliotheque', french: 'la bibliothèque' },
-        { icon: '🍽️', label: 'Restaurant', building: 'restaurant', french: 'le restaurant' }
-    ];
-    
-    const shuffled = [...buildings].sort(() => Math.random() - 0.5);
-    shuffled.forEach((word) => {
+    // Shuffle buildings for word bank
+    const shuffled = [...parisBuildings].sort(() => Math.random() - 0.5);
+    shuffled.forEach((item) => {
         const wordEl = document.createElement('div');
         wordEl.className = 'word-item';
         wordEl.draggable = true;
-        wordEl.textContent = word.french;
-        wordEl.dataset.word = word.building;
+        wordEl.textContent = item.french;
+        wordEl.dataset.word = item.building;
         wordEl.addEventListener('dragstart', handleDragStart);
         wordEl.addEventListener('dragend', handleDragEnd);
         wordBank.appendChild(wordEl);
     });
     
-    const slotOrder = ['cinema', 'gare', 'supermarche', 'boulangerie', 'parc', 'police', 'bibliotheque', 'restaurant'];
+    // Create building slots in fixed order
+    const slotOrder = ['parc', 'gare', 'cinema', 'poste', 'commissariat', 'eglise', 'stade', 'banque'];
     slotOrder.forEach(buildingKey => {
-        const building = buildings.find(b => b.building === buildingKey);
+        const building = parisBuildings.find(b => b.building === buildingKey);
         const slot = document.createElement('div');
         slot.className = 'building-slot';
         slot.dataset.building = building.building;
@@ -127,12 +186,15 @@ function handleDrop(e) {
     if (draggedElement && !this.classList.contains('filled')) {
         if (draggedElement.dataset.word === this.dataset.building) {
             this.classList.add('correct', 'filled');
-            this.innerHTML += `<div style="margin-top:0.5rem;font-weight:bold;color:#06d6a0;">${draggedElement.textContent}</div>`;
+            const matchedWord = draggedElement.textContent;
+            this.innerHTML += `<div style="margin-top:0.5rem;font-weight:bold;color:#06d6a0;">${matchedWord}</div>`;
             draggedElement.classList.add('matched');
             draggedElement.draggable = false;
             updateScore(10);
-            showFeedback('stage1Feedback', 'Bravo! Correct match! 🎉', 'success');
             gameState.correctAnswers++;
+            // French pronunciation
+            speakFrench(matchedWord);
+            showFeedback('stage1Feedback', 'Bravo! Correct match! 🎉', 'success');
             checkStage1Completion();
         } else {
             showFeedback('stage1Feedback', 'Try again! Regardez les icônes! 🤔', 'error');
@@ -143,26 +205,29 @@ function handleDrop(e) {
 function checkStage1Completion() {
     if (document.querySelectorAll('.building-slot.filled').length >= 6 && !gameState.stage1Completed) {
         gameState.stage1Completed = true;
+        gameState.maxUnlockedStage = 2;
         document.getElementById('stage1Next').style.display = 'inline-flex';
         showFeedback('stage1Feedback', 'Excellent! Stage 1 complete! Ready for Stage 2? 🚀', 'success');
     }
 }
 
-// ===== STAGE 2: VRAI/FAUX WITH STATIC IMAGE =====
+// ===== STAGE 2 =====
 function initStage2() {
     gameState.currentQuestion = 0;
     gameState.totalQuestions = vraiFauxQuestions.length;
     document.getElementById('totalQuestions').textContent = gameState.totalQuestions;
     createStaticMap();
-    showVraiFauxQuestion();
+    if (document.getElementById('stage2').classList.contains('active')) {
+        showVraiFauxQuestion();
+    }
 }
 
 function createStaticMap() {
     const container = document.getElementById('miniMapContainer');
     container.innerHTML = `
-        <h3>🗺️ Map - Plan de ville</h3>
+        <h3>🗺️ Paris (Twinklville) Map - Plan de Paris</h3>
         <div style="text-align: center; margin: 1rem 0;">
-            <img src="assets/map.png" alt="Map" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <img src="assets/map.png" alt="Paris Map" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         </div>
         <p class="map-legend"><small>Use this map to answer the questions (Vrai / Faux).</small></p>
     `;
@@ -171,12 +236,12 @@ function createStaticMap() {
 function showVraiFauxQuestion() {
     const q = vraiFauxQuestions[gameState.currentQuestion];
     document.getElementById('currentQuestion').textContent = gameState.currentQuestion + 1;
-    document.getElementById('questionText').innerHTML = q.text;
+    const questionBox = document.getElementById('questionText');
+    questionBox.innerHTML = `${q.text}<br><span class="english-hint">📖 ${q.english}</span>`;
     
     const answersGrid = document.getElementById('answersGrid');
     answersGrid.innerHTML = '';
     
-    // Create two buttons: Vrai and Faux
     const vraiBtn = document.createElement('button');
     vraiBtn.className = 'answer-btn';
     vraiBtn.textContent = '✅ Vrai (True)';
@@ -194,7 +259,6 @@ function showVraiFauxQuestion() {
 function checkVraiFaux(selectedBool, question) {
     document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
     const isCorrect = (selectedBool === question.isTrue);
-    
     if (isCorrect) {
         updateScore(15);
         gameState.correctAnswers++;
@@ -203,7 +267,6 @@ function checkVraiFaux(selectedBool, question) {
         const correctionMsg = question.correction ? ` Correction: ${question.correction}` : '';
         showFeedback('stage2Feedback', `Incorrect! ❌ ${question.text}${correctionMsg}`, 'error');
     }
-    
     gameState.currentQuestion++;
     if (gameState.currentQuestion < gameState.totalQuestions) {
         setTimeout(() => {
@@ -212,6 +275,7 @@ function checkVraiFaux(selectedBool, question) {
         }, 2500);
     } else {
         gameState.stage2Completed = true;
+        gameState.maxUnlockedStage = 3;
         setTimeout(() => {
             document.getElementById('stage2Next').style.display = 'inline-flex';
             showFeedback('stage2Feedback', 'Amazing! You\'re ready for the final mission! 🌟', 'success');
@@ -219,26 +283,18 @@ function checkVraiFaux(selectedBool, question) {
     }
 }
 
-// ===== STAGE 3: LEAFLET MAP (FIXED) =====
+// ===== STAGE 3 =====
 function initStage3() {
-    // Ensure map container has height (CSS already does)
-    // Small delay to let the tab become visible
     setTimeout(() => {
         if (map) {
             map.remove();
         }
-        // Re-initialize map
         map = L.map('map', { center: [48.8566, 2.3522], zoom: 13, zoomControl: true });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors | Rocket City Learning',
+            attribution: '© OpenStreetMap contributors | Paris Learning',
             maxZoom: 19
         }).addTo(map);
-        
-        // Force map to recalculate its size
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 100);
-        
+        setTimeout(() => map.invalidateSize(), 100);
         currentMapLocation = 0;
         showMapMission();
     }, 300);
@@ -256,15 +312,16 @@ function showMapMission() {
     markers.forEach(m => map.removeLayer(m));
     markers = [];
     
+    // Create one correct marker and two distractors
     const allMarkers = [
-        { lat: location.lat, lng: location.lng, isCorrect: true, name: location.name },
-        { lat: location.lat + 0.02, lng: location.lng + 0.02, isCorrect: false, name: 'Café' },
-        { lat: location.lat - 0.015, lng: location.lng + 0.01, isCorrect: false, name: 'Pharmacie' }
+        { lat: location.lat, lng: location.lng, isCorrect: true, name: location.name, frenchName: location.french },
+        { lat: location.lat + 0.02, lng: location.lng + 0.02, isCorrect: false, name: 'Café', frenchName: 'un café' },
+        { lat: location.lat - 0.015, lng: location.lng + 0.01, isCorrect: false, name: 'Pharmacie', frenchName: 'une pharmacie' }
     ].sort(() => Math.random() - 0.5);
     
     allMarkers.forEach(marker => {
         const m = L.marker([marker.lat, marker.lng]).addTo(map);
-        m.bindPopup(`<b>${marker.name}</b><br>Click to select`);
+        m.bindPopup(`<b>${marker.name}</b><br><i>${marker.frenchName}</i><br>Click to select`);
         m.on('click', () => handleMapClick(marker.isCorrect, location));
         markers.push(m);
     });
@@ -283,7 +340,7 @@ function handleMapClick(isCorrect, location) {
         setTimeout(() => {
             dialogueContainer.innerHTML = `
                 <div style="margin-bottom:1rem;padding:1rem;background:#f0f0f0;border-radius:10px;">
-                    <strong>Captain Martin:</strong> "${location.dialogue.answer}"
+                    <strong>Tourist Martin:</strong> "${location.dialogue.answer}"
                 </div>
                 <div class="dialogue-option" onclick="completeMapMission()">
                     ${location.dialogue.correct}
@@ -310,9 +367,9 @@ function completeMapMission() {
 function completeStage3() {
     gameState.stage3Completed = true;
     document.getElementById('stage3Complete').style.display = 'inline-flex';
-    showFeedback('stage3Feedback', '🎉 Mission Complete! You\'ve navigated Rocket City like a pro!', 'success');
+    showFeedback('stage3Feedback', '🎉 Mission Complete! You\'ve navigated Paris like a pro!', 'success');
     const finalMarker = L.marker([48.8566, 2.3522]).addTo(map);
-    finalMarker.bindPopup('<b>🏆 Rocket City Guide!</b><br>You did it!').openPopup();
+    finalMarker.bindPopup('<b>🏆 Paris Guide!</b><br>You did it!').openPopup();
 }
 
 // ===== NAVIGATION =====
@@ -326,6 +383,9 @@ function goToStage(stageNum) {
     progressFill.style.width = `${percent}%`;
     document.getElementById(`stage${stageNum}`).classList.add('active');
     gameState.currentStage = stageNum;
+    if (stageNum === 2 && gameState.currentQuestion === 0) {
+        showVraiFauxQuestion();
+    }
     if (stageNum === 3) {
         initStage3();
     }
