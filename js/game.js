@@ -7,8 +7,7 @@ const gameState = {
     stage1Completed: false,
     stage2Completed: false,
     stage3Completed: false,
-    currentDialogueIndex: 0,
-    maxUnlockedStage: 1
+    currentDialogueIndex: 0
 };
 
 // ===== STAGE 1: VOCABULARY (13 words) =====
@@ -28,7 +27,7 @@ const vocabularyStage1 = [
     { french: "Le stade", building: "stade", icon: "🏟️", label: "Stadium" }
 ];
 
-// ===== STAGE 2: DIALOGUES (5 dialogues, each with 2-3 lines) =====
+// ===== STAGE 2: DIALOGUES =====
 const dialogues = [
     {
         lines: [
@@ -67,13 +66,12 @@ const dialogues = [
     }
 ];
 
-// ===== STAGE 3: EIFFEL TOWER ONLY =====
+// ===== STAGE 3: EIFFEL TOWER =====
 const eiffelLocation = { name: "Tour Eiffel", french: "la Tour Eiffel", lat: 48.8584, lng: 2.2945 };
-
 let map;
 let eiffelMarker;
 
-// ===== SPEECH SYNTHESIS =====
+// ===== SPEECH =====
 function speakFrench(text) {
     if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
@@ -88,27 +86,21 @@ function speakFrench(text) {
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('stage1')) {
         initStage1();
-        initStage2();
+        initStage2(); // prepare data but don't show until stage 2 active
         updateScore(0);
         attachStageClickHandlers();
+        // Mark stage 1 as active initially
+        goToStage(1);
     }
 });
 
-// ===== CLICK ON STAGE INDICATORS =====
+// ===== CLICK HANDLERS (NO BLOCKING) =====
 function attachStageClickHandlers() {
     const dots = document.querySelectorAll('.stage-dot');
     dots.forEach((dot, idx) => {
         const stageNum = idx + 1;
         dot.addEventListener('click', () => {
-            if (stageNum <= gameState.maxUnlockedStage) {
-                goToStage(stageNum);
-            } else {
-                showFeedback('stage1Feedback', `Complete Stage ${gameState.maxUnlockedStage} first! 🔒`, 'error');
-                setTimeout(() => {
-                    const fb = document.getElementById('stage1Feedback');
-                    if (fb) fb.classList.remove('show');
-                }, 1500);
-            }
+            goToStage(stageNum);
         });
     });
 }
@@ -117,6 +109,7 @@ function attachStageClickHandlers() {
 function initStage1() {
     const wordBank = document.getElementById('wordBank');
     const cityMap = document.getElementById('cityMap');
+    if (!wordBank || !cityMap) return;
     wordBank.innerHTML = '';
     cityMap.innerHTML = '';
     
@@ -172,7 +165,7 @@ function handleDrop(e) {
             checkStage1Completion();
         } else {
             showFeedback('stage1Feedback', 'Try again! Regardez les icônes! 🤔', 'error');
-            setTimeout(() => document.getElementById('stage1Feedback').classList.remove('show'), 2000);
+            setTimeout(() => document.getElementById('stage1Feedback')?.classList.remove('show'), 2000);
         }
     }
 }
@@ -180,18 +173,14 @@ function checkStage1Completion() {
     const filled = document.querySelectorAll('.building-slot.filled').length;
     if (filled >= 10 && !gameState.stage1Completed) {
         gameState.stage1Completed = true;
-        gameState.maxUnlockedStage = 2;
         document.getElementById('stage1Next').style.display = 'inline-flex';
-        showFeedback('stage1Feedback', 'Excellent! Stage 1 complete! Ready for Stage 2? 🚀', 'success');
+        showFeedback('stage1Feedback', 'Excellent! Stage 1 complete! 🚀', 'success');
     }
 }
 
-// ===== STAGE 2: DIALOGUES WITH ARROWS =====
+// ===== STAGE 2 =====
 function initStage2() {
     createDialogueLayout();
-    if (document.getElementById('stage2').classList.contains('active')) {
-        showDialogueAtIndex(gameState.currentDialogueIndex);
-    }
 }
 
 function createDialogueLayout() {
@@ -222,27 +211,20 @@ function createDialogueLayout() {
                 </div>
             </div>
         </div>
-        <!-- Modal for enlarged map -->
         <div id="mapModal" class="modal">
             <span class="close-modal">&times;</span>
             <img class="modal-content" id="modalImage">
         </div>
     `;
     
-    // Set up navigation
     document.getElementById('prevDialogue').addEventListener('click', () => changeDialogue(-1));
     document.getElementById('nextDialogue').addEventListener('click', () => changeDialogue(1));
     
-    // Set up map click to enlarge
     const mapImg = document.getElementById('mapImage');
     const modal = document.getElementById('mapModal');
     const modalImg = document.getElementById('modalImage');
     const closeModal = document.querySelector('.close-modal');
-    
-    mapImg.onclick = () => {
-        modal.style.display = "flex";
-        modalImg.src = mapImg.src;
-    };
+    mapImg.onclick = () => { modal.style.display = "flex"; modalImg.src = mapImg.src; };
     closeModal.onclick = () => { modal.style.display = "none"; };
     window.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
     
@@ -260,6 +242,7 @@ function changeDialogue(delta) {
 function showDialogueAtIndex(index) {
     const dialogue = dialogues[index];
     const linesContainer = document.getElementById('dialogueLines');
+    if (!linesContainer) return;
     linesContainer.innerHTML = '';
     dialogue.lines.forEach(line => {
         const lineDiv = document.createElement('div');
@@ -267,21 +250,17 @@ function showDialogueAtIndex(index) {
         lineDiv.innerHTML = `<div class="french-line">${line.french}</div><div class="english-line">📖 ${line.english}</div>`;
         linesContainer.appendChild(lineDiv);
     });
-    
-    // Update counter and button states
     document.getElementById('dialogueCounter').textContent = `${index+1} / ${dialogues.length}`;
     const prevBtn = document.getElementById('prevDialogue');
     const nextBtn = document.getElementById('nextDialogue');
-    prevBtn.disabled = (index === 0);
-    nextBtn.disabled = (index === dialogues.length - 1);
+    if (prevBtn) prevBtn.disabled = (index === 0);
+    if (nextBtn) nextBtn.disabled = (index === dialogues.length - 1);
     
-    // Mark stage 2 as completed after showing all? 
-    // We'll consider stage 2 completed once user has seen all dialogues? 
-    // But easier: after at least one dialogue, allow next stage? 
-    // For simplicity, we'll auto-unlock when user clicks next stage button later.
+    // Mark stage 2 as "seen" but not necessarily completed
+    // We'll let the "Next Stage" button handle completion.
 }
 
-// ===== STAGE 3: EIFFEL TOWER ONLY + USEFUL PHRASES =====
+// ===== STAGE 3 =====
 function initStage3() {
     setTimeout(() => {
         if (map) {
@@ -294,12 +273,10 @@ function initStage3() {
         }).addTo(map);
         setTimeout(() => map.invalidateSize(), 100);
         
-        // Add Eiffel Tower marker
         if (eiffelMarker) map.removeLayer(eiffelMarker);
         eiffelMarker = L.marker([eiffelLocation.lat, eiffelLocation.lng]).addTo(map);
         eiffelMarker.bindPopup(`<b>${eiffelLocation.name}</b><br>${eiffelLocation.french}`).openPopup();
         
-        // Add useful phrases above map (already in HTML, but ensure content)
         const phrasesDiv = document.getElementById('usefulPhrases');
         if (phrasesDiv) {
             phrasesDiv.innerHTML = `
@@ -314,7 +291,7 @@ function initStage3() {
             `;
         }
         
-        // Auto-complete stage 3 after showing map
+        // Autocomplete stage 3 after showing map (optional)
         setTimeout(() => {
             if (!gameState.stage3Completed) {
                 gameState.stage3Completed = true;
@@ -325,37 +302,46 @@ function initStage3() {
     }, 300);
 }
 
-// ===== NAVIGATION =====
+// ===== NAVIGATION (MANUAL, NO BLOCKING) =====
 function goToStage(stageNum) {
+    // Hide all stages
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.stage-dot').forEach((dot, idx) => dot.classList.toggle('active', idx+1 === stageNum));
+    // Update stage indicators
+    document.querySelectorAll('.stage-dot').forEach((dot, idx) => {
+        dot.classList.toggle('active', idx+1 === stageNum);
+    });
+    // Update rocket progress
     const rocket = document.getElementById('rocket');
     const progressFill = document.getElementById('progressFill');
     const percent = ((stageNum-1)/2)*100;
     rocket.style.left = `${percent}%`;
     progressFill.style.width = `${percent}%`;
-    document.getElementById(`stage${stageNum}`).classList.add('active');
+    // Show target stage
+    const targetStage = document.getElementById(`stage${stageNum}`);
+    if (targetStage) targetStage.classList.add('active');
     gameState.currentStage = stageNum;
     
+    // Initialize content if needed (but avoid duplicate reinitialization that breaks state)
     if (stageNum === 2) {
+        // If dialogue container empty, create layout, else just refresh display
         if (!document.getElementById('dialogueLines')) {
             createDialogueLayout();
         } else {
             showDialogueAtIndex(gameState.currentDialogueIndex);
         }
-        // Unlock stage 2 completion after user has seen at least one dialogue? 
-        // We'll set a flag when they click next button. For now, let the "Final Mission" button appear after they've clicked through all? 
-        // Better: allow manual completion via button. We'll keep the next button as is.
     }
     if (stageNum === 3) {
         initStage3();
+    }
+    if (stageNum === 1) {
+        // No extra init needed; drag-drop already exists
     }
 }
 
 function showVictory() {
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
     document.getElementById('victory').classList.add('active');
-    const totalAttempts = 13 + 5; // 13 matches + 5 dialogues (no right/wrong answers now)
+    const totalAttempts = 13 + 5;
     const accuracy = Math.round((gameState.correctAnswers / totalAttempts) * 100);
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('accuracy').textContent = `${accuracy}%`;
