@@ -20,7 +20,7 @@
             <div class="stage-indicators">
                 <div class="stage-dot active" data-stage="1">1<br><small>Lexique</small></div>
                 <div class="stage-dot" data-stage="2">2<br><small>Dialogues</small></div>
-                <div class="stage-dot" data-stage="3">3<br><small>Route</small></div>
+                <div class="stage-dot" data-stage="3">3<br><small>Phrases</small></div>
             </div>
         </div>
         <div class="score-board"><span class="score-label">Score:</span><span class="score-value" id="score">0</span></div>
@@ -46,29 +46,22 @@
         <section id="stage2" class="stage">
             <div class="stage-header">
                 <h2>💬 Stage 2: Ask for Directions</h2>
-                <p class="instruction">Read the question and choose the correct answer.</p>
-                <p class="french-hint"><em>Choisissez la bonne réponse</em></p>
+                <p class="instruction">Read the dialogues and learn how to ask for and give directions.</p>
+                <p class="french-hint"><em>Lisez les dialogues et apprenez à demander son chemin.</em></p>
             </div>
             <div id="stage2-content"></div>
             <div class="feedback" id="stage2Feedback"></div>
-            <div class="question-counter">Dialogue <span id="currentQuestion">1</span> / <span id="totalQuestions">5</span></div>
             <button class="next-button" id="stage2Next" onclick="goToStage(3)" style="display:none;">Final Mission → 🌟</button>
         </section>
 
-        <!-- STAGE 3: Route on map -->
+        <!-- STAGE 3: Eiffel Tower + Useful Phrases -->
         <section id="stage3" class="stage">
             <div class="stage-header">
-                <h2>🗺️ Stage 3: Navigate Paris</h2>
-                <p class="instruction">Follow the route from the Eiffel Tower to the restaurant, supermarket, and bakery.</p>
-                <p class="french-hint"><em>Suivez l'itinéraire sur la carte</em></p>
+                <h2>🗺️ Stage 3: Useful Phrases & Landmark</h2>
+                <p class="instruction">Learn key directional phrases and locate the Eiffel Tower on the map.</p>
+                <p class="french-hint"><em>Apprenez les phrases utiles et trouvez la Tour Eiffel.</em></p>
             </div>
-            <div class="mission-briefing">
-                <div class="character-avatar">🗼</div>
-                <div class="mission-text">
-                    <h3>Paris Route Challenge:</h3>
-                    <p id="missionText">"Follow the route from the Eiffel Tower to the restaurant, then to the supermarket, and finally to the bakery!"</p>
-                </div>
-            </div>
+            <div id="usefulPhrases" class="useful-phrases"></div>
             <div id="map" class="leaflet-map"></div>
             <div class="feedback" id="stage3Feedback"></div>
             <button class="next-button" id="stage3Complete" onclick="showVictory()" style="display:none;">Claim Your Badge! 🏆</button>

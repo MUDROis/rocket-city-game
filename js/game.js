@@ -7,11 +7,11 @@ const gameState = {
     stage1Completed: false,
     stage2Completed: false,
     stage3Completed: false,
-    currentQuestion: 0,
+    currentDialogueIndex: 0,
     maxUnlockedStage: 1
 };
 
-// ===== STAGE 1: VOCABULARY (15 words, 2 rows) =====
+// ===== STAGE 1: VOCABULARY (13 words) =====
 const vocabularyStage1 = [
     { french: "Le parc", building: "parc", icon: "🌳", label: "Park" },
     { french: "L'aire de jeu", building: "aire_de_jeu", icon: "🎠", label: "Playground" },
@@ -27,54 +27,51 @@ const vocabularyStage1 = [
     { french: "Le glacier", building: "glacier", icon: "🍦", label: "Ice Cream Shop" },
     { french: "Le stade", building: "stade", icon: "🏟️", label: "Stadium" }
 ];
-// Note: 13 words total (we'll use all, add extra slots)
 
-// ===== STAGE 2: DIALOGUES (with map on right) =====
+// ===== STAGE 2: DIALOGUES (5 dialogues, each with 2-3 lines) =====
 const dialogues = [
     {
-        question: "Excusez-moi, où est le glacier ?",
-        correct: "Allez tout droit. Le glacier est à côté du parc du Soleil.",
-        wrong: ["Tournez à gauche, le glacier est loin.", "Le glacier est fermé aujourd'hui."],
-        englishHint: "Go straight. The ice cream shop is next to Soleil Park."
+        lines: [
+            { french: "— Excusez-moi, où est le glacier ?", english: "Excuse me, where is the ice cream shop?" },
+            { french: "— Allez tout droit. Le glacier est à côté du parc du Soleil.", english: "Go straight. The ice cream shop is next to Soleil Park." },
+            { french: "— Merci !", english: "Thank you!" }
+        ]
     },
     {
-        question: "Où est l'école, s'il vous plaît ?",
-        correct: "Tournez à droite. L'école est en face du stade.",
-        wrong: ["Allez tout droit, l'école est à gauche.", "L'école n'existe pas."],
-        englishHint: "Turn right. The school is opposite the stadium."
+        lines: [
+            { french: "— Où est l'école, s'il vous plaît ?", english: "Where is the school, please?" },
+            { french: "— Tournez à droite. L'école est en face du stade.", english: "Turn right. The school is opposite the stadium." },
+            { french: "— Merci beaucoup !", english: "Thank you very much!" }
+        ]
     },
     {
-        question: "Excusez-moi, je cherche la maison de Simon.",
-        correct: "Allez tout droit. C'est entre la boulangerie et le stade.",
-        wrong: ["Tournez à gauche, c'est près du parc.", "La maison est loin d'ici."],
-        englishHint: "Go straight. It's between the bakery and the stadium."
+        lines: [
+            { french: "— Excusez-moi, je cherche la maison de Simon.", english: "Excuse me, I'm looking for Simon's house." },
+            { french: "— Allez tout droit. C'est entre la boulangerie et le stade.", english: "Go straight. It's between the bakery and the stadium." },
+            { french: "— Merci !", english: "Thank you!" }
+        ]
     },
     {
-        question: "Où est le supermarché ?",
-        correct: "Tournez à gauche. Le supermarché est au coin de la rue.",
-        wrong: ["Allez tout droit, puis tournez à droite.", "Le supermarché est fermé."],
-        englishHint: "Turn left. The supermarket is on the corner of the street."
+        lines: [
+            { french: "— Où est le supermarché ?", english: "Where is the supermarket?" },
+            { french: "— Tournez à gauche. Le supermarché est au coin de la rue.", english: "Turn left. The supermarket is on the corner of the street." },
+            { french: "— Merci !", english: "Thank you!" }
+        ]
     },
     {
-        question: "Excusez-moi, où est la bibliothèque ?",
-        correct: "Allez tout droit. Tournez à droite. C'est à côté du poste de police.",
-        wrong: ["Tournez à gauche deux fois.", "La bibliothèque est à Paris."],
-        englishHint: "Go straight. Turn right. It's next to the police station."
+        lines: [
+            { french: "— Excusez-moi, où est la bibliothèque ?", english: "Excuse me, where is the library?" },
+            { french: "— Allez tout droit. Tournez à droite. C'est à côté du poste de police.", english: "Go straight. Turn right. It's next to the police station." },
+            { french: "— Merci beaucoup !", english: "Thank you very much!" }
+        ]
     }
 ];
 
-// ===== STAGE 3: ROUTE LOCATIONS (Paris) =====
-const routeLocations = [
-    { name: "Tour Eiffel", french: "la Tour Eiffel", lat: 48.8584, lng: 2.2945, type: "start" },
-    { name: "Restaurant", french: "le restaurant", lat: 48.8600, lng: 2.2970, type: "restaurant" },
-    { name: "Supermarché", french: "le supermarché", lat: 48.8620, lng: 2.3000, type: "supermarket" },
-    { name: "Boulangerie", french: "la boulangerie", lat: 48.8640, lng: 2.3030, type: "bakery" }
-];
+// ===== STAGE 3: EIFFEL TOWER ONLY =====
+const eiffelLocation = { name: "Tour Eiffel", french: "la Tour Eiffel", lat: 48.8584, lng: 2.2945 };
 
 let map;
-let markers = [];
-let currentLocationIndex = 0;
-let routePolyline;
+let eiffelMarker;
 
 // ===== SPEECH SYNTHESIS =====
 function speakFrench(text) {
@@ -116,14 +113,13 @@ function attachStageClickHandlers() {
     });
 }
 
-// ===== STAGE 1: 13 WORDS, ADD EXTRA SLOTS =====
+// ===== STAGE 1 =====
 function initStage1() {
     const wordBank = document.getElementById('wordBank');
     const cityMap = document.getElementById('cityMap');
     wordBank.innerHTML = '';
     cityMap.innerHTML = '';
     
-    // Shuffle words
     const shuffled = [...vocabularyStage1].sort(() => Math.random() - 0.5);
     shuffled.forEach((item) => {
         const wordEl = document.createElement('div');
@@ -136,7 +132,6 @@ function initStage1() {
         wordBank.appendChild(wordEl);
     });
     
-    // Create building slots (13 slots)
     const slotOrder = [
         'parc', 'aire_de_jeu', 'poste_de_police', 'maison', 'supermarche',
         'restaurant', 'ecole', 'bibliotheque', 'boulangerie', 'boucherie',
@@ -191,14 +186,11 @@ function checkStage1Completion() {
     }
 }
 
-// ===== STAGE 2: DIALOGUES WITH MAP ON RIGHT =====
+// ===== STAGE 2: DIALOGUES WITH ARROWS =====
 function initStage2() {
-    gameState.currentQuestion = 0;
-    gameState.totalQuestions = dialogues.length;
-    document.getElementById('totalQuestions').textContent = gameState.totalQuestions;
     createDialogueLayout();
     if (document.getElementById('stage2').classList.contains('active')) {
-        showDialogue();
+        showDialogueAtIndex(gameState.currentDialogueIndex);
     }
 }
 
@@ -209,70 +201,87 @@ function createDialogueLayout() {
         <div class="dialogue-layout">
             <div class="dialogue-left">
                 <div class="dialogue-card">
-                    <div class="dialogue-question" id="dialogueQuestion"></div>
-                    <div class="answers-grid" id="answersGrid"></div>
+                    <div class="dialogue-header">
+                        <span class="dialogue-title">💬 Conversation</span>
+                        <div class="dialogue-nav">
+                            <button id="prevDialogue" class="nav-arrow" disabled>◀</button>
+                            <span id="dialogueCounter">1 / 5</span>
+                            <button id="nextDialogue" class="nav-arrow">▶</button>
+                        </div>
+                    </div>
+                    <div id="dialogueLines" class="dialogue-lines"></div>
                 </div>
             </div>
             <div class="dialogue-right">
                 <div class="mini-map-container">
                     <h3>🗺️ Paris Map</h3>
-                    <img src="assets/map.png" alt="Paris Map" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-                    <p class="map-legend"><small>Use the map to understand the directions.</small></p>
+                    <div class="map-image-wrapper">
+                        <img id="mapImage" src="assets/map.png" alt="Paris Map" class="clickable-map">
+                    </div>
+                    <p class="map-legend"><small>Click on the map to enlarge it.</small></p>
                 </div>
             </div>
         </div>
+        <!-- Modal for enlarged map -->
+        <div id="mapModal" class="modal">
+            <span class="close-modal">&times;</span>
+            <img class="modal-content" id="modalImage">
+        </div>
     `;
-    showDialogue();
+    
+    // Set up navigation
+    document.getElementById('prevDialogue').addEventListener('click', () => changeDialogue(-1));
+    document.getElementById('nextDialogue').addEventListener('click', () => changeDialogue(1));
+    
+    // Set up map click to enlarge
+    const mapImg = document.getElementById('mapImage');
+    const modal = document.getElementById('mapModal');
+    const modalImg = document.getElementById('modalImage');
+    const closeModal = document.querySelector('.close-modal');
+    
+    mapImg.onclick = () => {
+        modal.style.display = "flex";
+        modalImg.src = mapImg.src;
+    };
+    closeModal.onclick = () => { modal.style.display = "none"; };
+    window.onclick = (e) => { if (e.target === modal) modal.style.display = "none"; };
+    
+    showDialogueAtIndex(gameState.currentDialogueIndex);
 }
 
-function showDialogue() {
-    const d = dialogues[gameState.currentQuestion];
-    document.getElementById('currentQuestion').textContent = gameState.currentQuestion + 1;
-    const questionDiv = document.getElementById('dialogueQuestion');
-    questionDiv.innerHTML = `<span class="question-icon">🗣️</span> <strong>${d.question}</strong><br><span class="english-hint">📖 ${d.englishHint}</span>`;
-    
-    const answersGrid = document.getElementById('answersGrid');
-    answersGrid.innerHTML = '';
-    const allAnswers = [
-        { text: d.correct, isCorrect: true },
-        ...d.wrong.map(w => ({ text: w, isCorrect: false }))
-    ].sort(() => Math.random() - 0.5);
-    
-    allAnswers.forEach(answer => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.textContent = answer.text;
-        btn.onclick = () => checkDialogueAnswer(answer.isCorrect, d);
-        answersGrid.appendChild(btn);
+function changeDialogue(delta) {
+    const newIndex = gameState.currentDialogueIndex + delta;
+    if (newIndex >= 0 && newIndex < dialogues.length) {
+        gameState.currentDialogueIndex = newIndex;
+        showDialogueAtIndex(newIndex);
+    }
+}
+
+function showDialogueAtIndex(index) {
+    const dialogue = dialogues[index];
+    const linesContainer = document.getElementById('dialogueLines');
+    linesContainer.innerHTML = '';
+    dialogue.lines.forEach(line => {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'dialogue-line';
+        lineDiv.innerHTML = `<div class="french-line">${line.french}</div><div class="english-line">📖 ${line.english}</div>`;
+        linesContainer.appendChild(lineDiv);
     });
+    
+    // Update counter and button states
+    document.getElementById('dialogueCounter').textContent = `${index+1} / ${dialogues.length}`;
+    const prevBtn = document.getElementById('prevDialogue');
+    const nextBtn = document.getElementById('nextDialogue');
+    prevBtn.disabled = (index === 0);
+    nextBtn.disabled = (index === dialogues.length - 1);
+    
+    // Mark stage 2 as completed after showing all? 
+    // We'll consider stage 2 completed once user has seen all dialogues? 
+    // But easier: after at least one dialogue, allow next stage? 
+    // For simplicity, we'll auto-unlock when user clicks next stage button later.
 }
 
-function checkDialogueAnswer(isCorrect, dialogue) {
-    document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
-    if (isCorrect) {
-        updateScore(15);
-        gameState.correctAnswers++;
-        showFeedback('stage2Feedback', `Correct! ✅ ${dialogue.correct}`, 'success');
-    } else {
-        showFeedback('stage2Feedback', `Incorrect! ❌ The correct answer is: ${dialogue.correct}`, 'error');
-    }
-    gameState.currentQuestion++;
-    if (gameState.currentQuestion < gameState.totalQuestions) {
-        setTimeout(() => {
-            document.getElementById('stage2Feedback').classList.remove('show');
-            showDialogue();
-        }, 2500);
-    } else {
-        gameState.stage2Completed = true;
-        gameState.maxUnlockedStage = 3;
-        setTimeout(() => {
-            document.getElementById('stage2Next').style.display = 'inline-flex';
-            showFeedback('stage2Feedback', 'Amazing! You\'re ready for the final mission! 🌟', 'success');
-        }, 1500);
-    }
-}
-
-// ===== STAGE 3: ROUTE ON MAP (no task text) =====
+// ===== STAGE 3: EIFFEL TOWER ONLY + USEFUL PHRASES =====
 function initStage3() {
     setTimeout(() => {
         if (map) {
@@ -285,43 +294,35 @@ function initStage3() {
         }).addTo(map);
         setTimeout(() => map.invalidateSize(), 100);
         
-        // Clear previous markers and polyline
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
-        if (routePolyline) map.removeLayer(routePolyline);
+        // Add Eiffel Tower marker
+        if (eiffelMarker) map.removeLayer(eiffelMarker);
+        eiffelMarker = L.marker([eiffelLocation.lat, eiffelLocation.lng]).addTo(map);
+        eiffelMarker.bindPopup(`<b>${eiffelLocation.name}</b><br>${eiffelLocation.french}`).openPopup();
         
-        // Add markers for each location with labels
-        routeLocations.forEach((loc, idx) => {
-            const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-            marker.bindPopup(`<b>${loc.name}</b><br>${loc.french}`).openPopup();
-            markers.push(marker);
-            // Add label via tooltip or popup
-        });
-        
-        // Draw polyline route from start to end
-        const latlngs = routeLocations.map(loc => [loc.lat, loc.lng]);
-        routePolyline = L.polyline(latlngs, { color: '#ff6b35', weight: 4, opacity: 0.7 }).addTo(map);
-        map.fitBounds(routePolyline.getBounds());
-        
-        // Remove "Task" text from mission briefing
-        const missionText = document.getElementById('missionText');
-        if (missionText) {
-            missionText.innerHTML = `"Follow the route from the Eiffel Tower to the restaurant, then to the supermarket, and finally to the bakery!"`;
+        // Add useful phrases above map (already in HTML, but ensure content)
+        const phrasesDiv = document.getElementById('usefulPhrases');
+        if (phrasesDiv) {
+            phrasesDiv.innerHTML = `
+                <div class="phrases-container">
+                    <span class="phrase">🚶 Allez tout droit (Go straight)</span>
+                    <span class="phrase">👉 Tournez à droite (Turn right)</span>
+                    <span class="phrase">👈 Tournez à gauche (Turn left)</span>
+                    <span class="phrase">📌 à côté de (next to)</span>
+                    <span class="phrase">🔄 en face de (opposite)</span>
+                    <span class="phrase">🔀 entre (between)</span>
+                </div>
+            `;
         }
         
-        // Mark stage as complete after showing route (no interaction needed)
+        // Auto-complete stage 3 after showing map
         setTimeout(() => {
             if (!gameState.stage3Completed) {
-                completeStage3();
+                gameState.stage3Completed = true;
+                document.getElementById('stage3Complete').style.display = 'inline-flex';
+                showFeedback('stage3Feedback', '🎉 You\'ve seen the Eiffel Tower! Ready to claim your badge?', 'success');
             }
         }, 2000);
     }, 300);
-}
-
-function completeStage3() {
-    gameState.stage3Completed = true;
-    document.getElementById('stage3Complete').style.display = 'inline-flex';
-    showFeedback('stage3Feedback', '🎉 Route complete! You\'ve navigated Paris like a pro!', 'success');
 }
 
 // ===== NAVIGATION =====
@@ -335,8 +336,16 @@ function goToStage(stageNum) {
     progressFill.style.width = `${percent}%`;
     document.getElementById(`stage${stageNum}`).classList.add('active');
     gameState.currentStage = stageNum;
-    if (stageNum === 2 && gameState.currentQuestion === 0) {
-        createDialogueLayout();
+    
+    if (stageNum === 2) {
+        if (!document.getElementById('dialogueLines')) {
+            createDialogueLayout();
+        } else {
+            showDialogueAtIndex(gameState.currentDialogueIndex);
+        }
+        // Unlock stage 2 completion after user has seen at least one dialogue? 
+        // We'll set a flag when they click next button. For now, let the "Final Mission" button appear after they've clicked through all? 
+        // Better: allow manual completion via button. We'll keep the next button as is.
     }
     if (stageNum === 3) {
         initStage3();
@@ -346,7 +355,7 @@ function goToStage(stageNum) {
 function showVictory() {
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
     document.getElementById('victory').classList.add('active');
-    const totalAttempts = 13 + gameState.totalQuestions + routeLocations.length;
+    const totalAttempts = 13 + 5; // 13 matches + 5 dialogues (no right/wrong answers now)
     const accuracy = Math.round((gameState.correctAnswers / totalAttempts) * 100);
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('accuracy').textContent = `${accuracy}%`;
@@ -387,6 +396,7 @@ function updateScore(points) {
 }
 function showFeedback(elementId, message, type) {
     const fb = document.getElementById(elementId);
+    if (!fb) return;
     fb.textContent = message;
     fb.className = `feedback show ${type}`;
     if (type === 'error') setTimeout(() => fb.classList.remove('show'), 2500);
