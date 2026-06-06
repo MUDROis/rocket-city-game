@@ -10,74 +10,27 @@ const gameState = {
     currentQuestion: 0
 };
 
-// ===== DIRECTION QUESTIONS (обновлены под мини-карту) =====
-const directionQuestions = [
-    {
-        question: 'Où est la boulangerie?',
-        frenchHint: 'Where is the bakery?',
-        correct: 'Elle est à côté de la gare SNCF',
-        wrong: [
-            'Elle est en face du cinéma',
-            'Elle est loin du parc',
-            'Elle est entre l\'hôpital et le musée'
-        ],
-        explanation: 'La boulangerie est près de la gare'
-    },
-    {
-        question: 'Comment aller au parc?',
-        frenchHint: 'How to get to the park?',
-        correct: 'Allez tout droit sur l\'Avenue de l\'Espace',
-        wrong: [
-            'Tournez à droite deux fois',
-            'Le parc est fermé',
-            'Allez en direction opposée'
-        ],
-        explanation: 'Le parc est sur l\'Avenue de l\'Espace'
-    },
-    {
-        question: 'Où est le poste de police?',
-        frenchHint: 'Where is the police station?',
-        correct: 'Il est sur la Rue de la Fusée',
-        wrong: [
-            'Il est à côté du restaurant',
-            'Il est loin de la ville',
-            'Il n\'existe pas'
-        ],
-        explanation: 'Le poste de police est sur la Rue de la Fusée'
-    },
-    {
-        question: 'La bibliothèque est...',
-        frenchHint: 'The library is...',
-        correct: 'au centre de Rocket City',
-        wrong: [
-            'loin du centre-ville',
-            'à droite de la piscine',
-            'fermée aujourd\'hui'
-        ],
-        explanation: 'La bibliothèque est au centre'
-    },
-    {
-        question: 'Pour aller au cinéma...',
-        frenchHint: 'To go to the cinema...',
-        correct: 'allez sur l\'Avenue de l\'Espace',
-        wrong: [
-            'allez tout droit sans tourner',
-            'tournez à gauche trois fois',
-            'le cinéma est fermé'
-        ],
-        explanation: 'Le cinéma est sur l\'Avenue de l\'Espace'
-    }
+// ===== STAGE 2: VRAI/FAUX QUESTIONS (based on Twinklville map) =====
+const vraiFauxQuestions = [
+    { text: "Le parc est à côté de la gare SNCF.", isTrue: true, correction: "" },
+    { text: "Il y a une usine entre le stade et la mosquée.", isTrue: true, correction: "" },
+    { text: "Il n’y a pas de centre sportif à Twinklville.", isTrue: false, correction: "Il y a un centre sportif à Twinklville." },
+    { text: "Le stade est en face de la poste.", isTrue: true, correction: "" },
+    { text: "La banque est à gauche de l’hôtel.", isTrue: false, correction: "La banque est à droite de l’hôtel. (L’hôtel est à gauche de la banque.)" },
+    { text: "Le commissariat de police est à droite de l’église.", isTrue: true, correction: "" },
+    { text: "L’office de tourisme n’est pas loin du stade.", isTrue: true, correction: "" },
+    { text: "L’église est à côté de la patinoire.", isTrue: false, correction: "L’église est à côté du commissariat." },
+    { text: "Il y a une bibliothèque à Twinklville.", isTrue: false, correction: "Il n’y a pas de bibliothèque à Twinklville." },
+    { text: "L’usine est en face du cinéma.", isTrue: true, correction: "" }
 ];
 
-// ===== STAGE 3: MAP LOCATIONS (Paris coordinates for realism) =====
+// ===== STAGE 3: MAP LOCATIONS (Paris coordinates) =====
 const mapLocations = [
     {
         name: 'La Boulangerie',
         french: 'la boulangerie',
-        address: 'Boulangerie, Paris',
         lat: 48.8566,
         lng: 2.3522,
-        question: 'Find the bakery (la boulangerie)',
         dialogue: {
             ask: 'Excusez-moi, où est la boulangerie, s\'il vous plaît?',
             answer: 'La boulangerie est près de la tour Eiffel. Allez tout droit!',
@@ -87,10 +40,8 @@ const mapLocations = [
     {
         name: 'La Gare',
         french: 'la gare SNCF',
-        address: 'Gare du Nord, Paris',
         lat: 48.8809,
         lng: 2.3553,
-        question: 'Find the train station (la gare)',
         dialogue: {
             ask: 'Comment aller à la gare?',
             answer: 'La gare est au nord. Tournez à droite!',
@@ -100,10 +51,8 @@ const mapLocations = [
     {
         name: 'Le Parc',
         french: 'le parc',
-        address: 'Jardin du Luxembourg, Paris',
         lat: 48.8462,
         lng: 2.3372,
-        question: 'Find the park (le parc)',
         dialogue: {
             ask: 'Où est le parc?',
             answer: 'Le parc est au sud. Allez tout droit!',
@@ -116,7 +65,7 @@ let map;
 let markers = [];
 let currentMapLocation = 0;
 
-// ===== INITIALIZATION =====
+// ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('stage1')) {
         initStage1();
@@ -125,12 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ===== STAGE 1: WORD MATCH (CORRECTED: exactly 8 words for 8 buildings) =====
+// ===== STAGE 1 (unchanged, already correct) =====
 function initStage1() {
     const wordBank = document.getElementById('wordBank');
     const cityMap = document.getElementById('cityMap');
     
-    // Buildings EXACTLY matching our 8 slots
     const buildings = [
         { icon: '🎬', label: 'Cinema', building: 'cinema', french: 'le cinéma' },
         { icon: '🚆', label: 'Train Station', building: 'gare', french: 'la gare SNCF' },
@@ -142,209 +90,125 @@ function initStage1() {
         { icon: '🍽️', label: 'Restaurant', building: 'restaurant', french: 'le restaurant' }
     ];
     
-    // Shuffle buildings for word bank
     const shuffled = [...buildings].sort(() => Math.random() - 0.5);
-    
-    // Create word items
-    shuffled.forEach((word, index) => {
+    shuffled.forEach((word) => {
         const wordEl = document.createElement('div');
         wordEl.className = 'word-item';
         wordEl.draggable = true;
         wordEl.textContent = word.french;
         wordEl.dataset.word = word.building;
-        wordEl.dataset.index = index;
-        
         wordEl.addEventListener('dragstart', handleDragStart);
         wordEl.addEventListener('dragend', handleDragEnd);
-        
         wordBank.appendChild(wordEl);
     });
     
-    // Create building slots (in fixed order for the map)
     const slotOrder = ['cinema', 'gare', 'supermarche', 'boulangerie', 'parc', 'police', 'bibliotheque', 'restaurant'];
-    
     slotOrder.forEach(buildingKey => {
         const building = buildings.find(b => b.building === buildingKey);
         const slot = document.createElement('div');
         slot.className = 'building-slot';
         slot.dataset.building = building.building;
-        
-        slot.innerHTML = `
-            <div class="building-icon">${building.icon}</div>
-            <div class="building-label">${building.label}</div>
-        `;
-        
+        slot.innerHTML = `<div class="building-icon">${building.icon}</div><div class="building-label">${building.label}</div>`;
         slot.addEventListener('dragover', handleDragOver);
         slot.addEventListener('dragleave', handleDragLeave);
         slot.addEventListener('drop', handleDrop);
-        
         cityMap.appendChild(slot);
     });
 }
 
 let draggedElement = null;
-
-function handleDragStart(e) {
-    draggedElement = this;
-    this.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragEnd(e) {
-    this.classList.remove('dragging');
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    this.classList.add('drag-over');
-}
-
-function handleDragLeave(e) {
-    this.classList.remove('drag-over');
-}
-
+function handleDragStart(e) { draggedElement = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function handleDragEnd(e) { this.classList.remove('dragging'); }
+function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over'); }
+function handleDragLeave(e) { this.classList.remove('drag-over'); }
 function handleDrop(e) {
     e.preventDefault();
     this.classList.remove('drag-over');
-    
     if (draggedElement && !this.classList.contains('filled')) {
-        const wordBuilding = draggedElement.dataset.word;
-        const slotBuilding = this.dataset.building;
-        
-        if (wordBuilding === slotBuilding) {
+        if (draggedElement.dataset.word === this.dataset.building) {
             this.classList.add('correct', 'filled');
             this.innerHTML += `<div style="margin-top:0.5rem;font-weight:bold;color:#06d6a0;">${draggedElement.textContent}</div>`;
             draggedElement.classList.add('matched');
             draggedElement.draggable = false;
-            
             updateScore(10);
             showFeedback('stage1Feedback', 'Bravo! Correct match! 🎉', 'success');
             gameState.correctAnswers++;
             checkStage1Completion();
         } else {
             showFeedback('stage1Feedback', 'Try again! Regardez les icônes! 🤔', 'error');
-            setTimeout(() => {
-                document.getElementById('stage1Feedback').classList.remove('show');
-            }, 2000);
+            setTimeout(() => document.getElementById('stage1Feedback').classList.remove('show'), 2000);
         }
     }
 }
-
 function checkStage1Completion() {
-    const matched = document.querySelectorAll('.building-slot.filled').length;
-    if (matched >= 6) {
-        if (!gameState.stage1Completed) {
-            gameState.stage1Completed = true;
-            document.getElementById('stage1Next').style.display = 'inline-flex';
-            showFeedback('stage1Feedback', 'Excellent! Stage 1 complete! Ready for Stage 2? 🚀', 'success');
-        }
+    if (document.querySelectorAll('.building-slot.filled').length >= 6 && !gameState.stage1Completed) {
+        gameState.stage1Completed = true;
+        document.getElementById('stage1Next').style.display = 'inline-flex';
+        showFeedback('stage1Feedback', 'Excellent! Stage 1 complete! Ready for Stage 2? 🚀', 'success');
     }
 }
 
-// ===== STAGE 2: DIRECTION DECODER (with mini-map) =====
+// ===== STAGE 2: VRAI/FAUX WITH STATIC IMAGE =====
 function initStage2() {
     gameState.currentQuestion = 0;
-    gameState.totalQuestions = directionQuestions.length;
+    gameState.totalQuestions = vraiFauxQuestions.length;
     document.getElementById('totalQuestions').textContent = gameState.totalQuestions;
-    
-    // Create mini map visualization
-    createMiniMap();
-    
-    showQuestion();
+    createStaticMap();
+    showVraiFauxQuestion();
 }
 
-function createMiniMap() {
+function createStaticMap() {
     const container = document.getElementById('miniMapContainer');
     container.innerHTML = `
-        <h3>🗺️ Rocket City Map - Plan de Rocket City</h3>
-        <div class="mini-map">
-            <div class="map-grid">
-                <div class="map-building" style="grid-column:1; grid-row:1; background:#9d4edd;">
-                    <span class="map-icon">🎬</span>
-                    <span class="map-label">Cinéma</span>
-                </div>
-                <div class="map-building" style="grid-column:2; grid-row:1; background:#06d6a0;">
-                    <span class="map-icon">🌳</span>
-                    <span class="map-label">Parc</span>
-                </div>
-                <div class="map-building" style="grid-column:3; grid-row:1; background:#ffd60a;">
-                    <span class="map-icon">🚆</span>
-                    <span class="map-label">Gare SNCF</span>
-                </div>
-                <div class="map-building" style="grid-column:1; grid-row:2; background:#ff6b35;">
-                    <span class="map-icon">🥖</span>
-                    <span class="map-label">Boulangerie</span>
-                </div>
-                <div class="map-building" style="grid-column:2; grid-row:2; background:#1a1a2e; color:white;">
-                    <span class="map-icon">📚</span>
-                    <span class="map-label">Bibliothèque</span>
-                </div>
-                <div class="map-building" style="grid-column:3; grid-row:2; background:#06d6a0;">
-                    <span class="map-icon">🚓</span>
-                    <span class="map-label">Police</span>
-                </div>
-                <div class="map-building" style="grid-column:1; grid-row:3; background:#ffd60a;">
-                    <span class="map-icon">🍽️</span>
-                    <span class="map-label">Restaurant</span>
-                </div>
-                <div class="map-building" style="grid-column:2; grid-row:3; background:#9d4edd;">
-                    <span class="map-icon">🛒</span>
-                    <span class="map-label">Supermarché</span>
-                </div>
-                <div class="map-street" style="grid-column:1/4; grid-row:1; top:33%;">Avenue de l'Espace</div>
-                <div class="map-street" style="grid-column:1/4; grid-row:2; top:66%;">Rue de la Fusée</div>
-            </div>
-            <div class="map-legend">
-                <small> Use this map to answer the questions!</small>
-            </div>
+        <h3>🗺️ Twinklville Map - Plan de Twinklville</h3>
+        <div style="text-align: center; margin: 1rem 0;">
+            <img src="assets/map.png" alt="Twinklville Map" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         </div>
+        <p class="map-legend"><small>Use this map to answer the questions (Vrai / Faux).</small></p>
     `;
 }
 
-function showQuestion() {
-    const q = directionQuestions[gameState.currentQuestion];
+function showVraiFauxQuestion() {
+    const q = vraiFauxQuestions[gameState.currentQuestion];
     document.getElementById('currentQuestion').textContent = gameState.currentQuestion + 1;
-    document.getElementById('questionText').textContent = q.question;
+    document.getElementById('questionText').innerHTML = q.text;
     
     const answersGrid = document.getElementById('answersGrid');
     answersGrid.innerHTML = '';
     
-    const allAnswers = [
-        { text: q.correct, isCorrect: true },
-        ...q.wrong.map(w => ({ text: w, isCorrect: false }))
-    ].sort(() => Math.random() - 0.5);
+    // Create two buttons: Vrai and Faux
+    const vraiBtn = document.createElement('button');
+    vraiBtn.className = 'answer-btn';
+    vraiBtn.textContent = '✅ Vrai (True)';
+    vraiBtn.onclick = () => checkVraiFaux(true, q);
     
-    allAnswers.forEach(answer => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.textContent = answer.text;
-        btn.onclick = () => checkAnswer(answer.isCorrect, q.explanation, btn);
-        answersGrid.appendChild(btn);
-    });
+    const fauxBtn = document.createElement('button');
+    fauxBtn.className = 'answer-btn';
+    fauxBtn.textContent = '❌ Faux (False)';
+    fauxBtn.onclick = () => checkVraiFaux(false, q);
+    
+    answersGrid.appendChild(vraiBtn);
+    answersGrid.appendChild(fauxBtn);
 }
 
-function checkAnswer(isCorrect, explanation, btnElement) {
-    document.querySelectorAll('.answer-btn').forEach(btn => {
-        btn.disabled = true;
-    });
+function checkVraiFaux(selectedBool, question) {
+    document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+    const isCorrect = (selectedBool === question.isTrue);
     
     if (isCorrect) {
-        btnElement.classList.add('correct');
         updateScore(15);
         gameState.correctAnswers++;
-        showFeedback('stage2Feedback', `Correct! ${explanation} ✅`, 'success');
+        showFeedback('stage2Feedback', `Correct! ✅ ${question.text}`, 'success');
     } else {
-        btnElement.classList.add('wrong');
-        showFeedback('stage2Feedback', `Not quite. ${explanation} Try to remember for next time!`, 'error');
+        const correctionMsg = question.correction ? ` Correction: ${question.correction}` : '';
+        showFeedback('stage2Feedback', `Incorrect! ❌ ${question.text}${correctionMsg}`, 'error');
     }
     
     gameState.currentQuestion++;
-    
     if (gameState.currentQuestion < gameState.totalQuestions) {
         setTimeout(() => {
             document.getElementById('stage2Feedback').classList.remove('show');
-            showQuestion();
+            showVraiFauxQuestion();
         }, 2500);
     } else {
         gameState.stage2Completed = true;
@@ -355,28 +219,27 @@ function checkAnswer(isCorrect, explanation, btnElement) {
     }
 }
 
-// ===== STAGE 3: LEAFLET MAP (fixed initialization) =====
+// ===== STAGE 3: LEAFLET MAP (FIXED) =====
 function initStage3() {
+    // Ensure map container has height (CSS already does)
+    // Small delay to let the tab become visible
     setTimeout(() => {
         if (map) {
             map.remove();
         }
-        
-        map = L.map('map', {
-            center: [48.8566, 2.3522],
-            zoom: 13,
-            zoomControl: true
-        });
-        
+        // Re-initialize map
+        map = L.map('map', { center: [48.8566, 2.3522], zoom: 13, zoomControl: true });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors | Rocket City Learning',
             maxZoom: 19
         }).addTo(map);
         
+        // Force map to recalculate its size
         setTimeout(() => {
             map.invalidateSize();
         }, 100);
         
+        currentMapLocation = 0;
         showMapMission();
     }, 300);
 }
@@ -386,13 +249,11 @@ function showMapMission() {
         completeStage3();
         return;
     }
-    
     const location = mapLocations[currentMapLocation];
-    
     document.getElementById('missionText').innerHTML = 
         `"${location.dialogue.ask}"<br><br><strong>Task:</strong> Find ${location.french} on the map!`;
     
-    markers.forEach(marker => map.removeLayer(marker));
+    markers.forEach(m => map.removeLayer(m));
     markers = [];
     
     const allMarkers = [
@@ -401,14 +262,10 @@ function showMapMission() {
         { lat: location.lat - 0.015, lng: location.lng + 0.01, isCorrect: false, name: 'Pharmacie' }
     ].sort(() => Math.random() - 0.5);
     
-    allMarkers.forEach((marker) => {
+    allMarkers.forEach(marker => {
         const m = L.marker([marker.lat, marker.lng]).addTo(map);
         m.bindPopup(`<b>${marker.name}</b><br>Click to select`);
-        
-        m.on('click', () => {
-            handleMapClick(marker.isCorrect, location);
-        });
-        
+        m.on('click', () => handleMapClick(marker.isCorrect, location));
         markers.push(m);
     });
     
@@ -419,13 +276,10 @@ function showMapMission() {
 function handleMapClick(isCorrect, location) {
     const dialogueContainer = document.getElementById('dialogueContainer');
     dialogueContainer.innerHTML = '';
-    
     if (isCorrect) {
         updateScore(20);
         gameState.correctAnswers++;
-        
         showFeedback('stage3Feedback', `Excellent! You found ${location.french}! 🎯`, 'success');
-        
         setTimeout(() => {
             dialogueContainer.innerHTML = `
                 <div style="margin-bottom:1rem;padding:1rem;background:#f0f0f0;border-radius:10px;">
@@ -438,9 +292,7 @@ function handleMapClick(isCorrect, location) {
         }, 1000);
     } else {
         showFeedback('stage3Feedback', 'Not quite! Look at the map more carefully. 🗺️', 'error');
-        setTimeout(() => {
-            document.getElementById('stage3Feedback').classList.remove('show');
-        }, 2000);
+        setTimeout(() => document.getElementById('stage3Feedback').classList.remove('show'), 2000);
     }
 }
 
@@ -448,11 +300,8 @@ function completeMapMission() {
     currentMapLocation++;
     document.getElementById('dialogueContainer').innerHTML = '';
     document.getElementById('stage3Feedback').classList.remove('show');
-    
     if (currentMapLocation < mapLocations.length) {
-        setTimeout(() => {
-            showMapMission();
-        }, 500);
+        setTimeout(() => showMapMission(), 500);
     } else {
         completeStage3();
     }
@@ -462,7 +311,6 @@ function completeStage3() {
     gameState.stage3Completed = true;
     document.getElementById('stage3Complete').style.display = 'inline-flex';
     showFeedback('stage3Feedback', '🎉 Mission Complete! You\'ve navigated Rocket City like a pro!', 'success');
-    
     const finalMarker = L.marker([48.8566, 2.3522]).addTo(map);
     finalMarker.bindPopup('<b>🏆 Rocket City Guide!</b><br>You did it!').openPopup();
 }
@@ -470,38 +318,26 @@ function completeStage3() {
 // ===== NAVIGATION =====
 function goToStage(stageNum) {
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
-    
-    document.querySelectorAll('.stage-dot').forEach((dot, index) => {
-        dot.classList.toggle('active', index + 1 === stageNum);
-    });
-    
+    document.querySelectorAll('.stage-dot').forEach((dot, idx) => dot.classList.toggle('active', idx+1 === stageNum));
     const rocket = document.getElementById('rocket');
     const progressFill = document.getElementById('progressFill');
-    const percentage = ((stageNum - 1) / 2) * 100;
-    rocket.style.left = `${percentage}%`;
-    progressFill.style.width = `${percentage}%`;
-    
+    const percent = ((stageNum-1)/2)*100;
+    rocket.style.left = `${percent}%`;
+    progressFill.style.width = `${percent}%`;
     document.getElementById(`stage${stageNum}`).classList.add('active');
     gameState.currentStage = stageNum;
-    document.getElementById('stageNumber').textContent = stageNum;
-    
     if (stageNum === 3) {
-        setTimeout(() => {
-            initStage3();
-        }, 300);
+        initStage3();
     }
 }
 
 function showVictory() {
     document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
     document.getElementById('victory').classList.add('active');
-    
-    const totalAttempts = 8 + gameState.totalQuestions; // 8 matches + 5 questions
+    const totalAttempts = 8 + gameState.totalQuestions + mapLocations.length;
     const accuracy = Math.round((gameState.correctAnswers / totalAttempts) * 100);
-    
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('accuracy').textContent = `${accuracy}%`;
-    
     createConfetti();
 }
 
@@ -520,48 +356,26 @@ function createConfetti() {
             confetti.style.zIndex = '9999';
             confetti.style.pointerEvents = 'none';
             document.body.appendChild(confetti);
-            
             const duration = Math.random() * 3 + 2;
             confetti.animate([
                 { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
                 { transform: `translateY(100vh) rotate(${Math.random() * 720}deg)`, opacity: 0 }
-            ], {
-                duration: duration * 1000,
-                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-            }).onfinish = () => confetti.remove();
+            ], { duration: duration * 1000, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }).onfinish = () => confetti.remove();
         }, i * 50);
     }
 }
 
-function restartGame() {
-    location.reload();
-}
-
+function restartGame() { location.reload(); }
 function updateScore(points) {
     gameState.score += points;
     const scoreEl = document.getElementById('score');
     scoreEl.textContent = gameState.score;
     scoreEl.style.transform = 'scale(1.3)';
-    setTimeout(() => {
-        scoreEl.style.transform = 'scale(1)';
-    }, 200);
+    setTimeout(() => scoreEl.style.transform = 'scale(1)', 200);
 }
-
 function showFeedback(elementId, message, type) {
-    const feedback = document.getElementById(elementId);
-    feedback.textContent = message;
-    feedback.className = `feedback show ${type}`;
-    
-    if (type === 'error') {
-        setTimeout(() => {
-            feedback.classList.remove('show');
-        }, 2500);
-    }
+    const fb = document.getElementById(elementId);
+    fb.textContent = message;
+    fb.className = `feedback show ${type}`;
+    if (type === 'error') setTimeout(() => fb.classList.remove('show'), 2500);
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const scoreEl = document.getElementById('score');
-    if (scoreEl) {
-        scoreEl.style.transition = 'transform 0.2s ease';
-    }
-});
