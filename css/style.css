@@ -844,3 +844,66 @@ body {
 .fade-in {
     animation: fadeIn 0.5s ease;
 }
+/* ===== STAGE 2: DIALOGUE LAYOUT (MAP RIGHT) ===== */
+.dialogue-layout {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+.dialogue-left {
+    flex: 1;
+    min-width: 250px;
+}
+.dialogue-right {
+    flex: 1;
+    min-width: 250px;
+}
+.dialogue-card {
+    background: rgba(255,255,255,0.95);
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.dialogue-question {
+    background: linear-gradient(135deg, var(--neon-purple) 0%, #7b2cbf 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+.dialogue-question .question-icon {
+    font-size: 1.8rem;
+    margin-right: 0.5rem;
+}
+.english-hint {
+    display: block;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    opacity: 0.9;
+}
+.mini-map-container {
+    background: rgba(255,255,255,0.95);
+    padding: 1rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: center;
+}
+.mini-map-container h3 {
+    margin-bottom: 0.5rem;
+    color: var(--space-blue);
+}
+.map-legend {
+    margin-top: 10px;
+    color: #888;
+    font-size: 0.8rem;
+}
+
+/* ===== STAGE 3: ROUTE ===== */
+#map {
+    height: 450px;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 1;
+}

@@ -19,8 +19,8 @@
             </div>
             <div class="stage-indicators">
                 <div class="stage-dot active" data-stage="1">1<br><small>Lexique</small></div>
-                <div class="stage-dot" data-stage="2">2<br><small>Vrai/Faux</small></div>
-                <div class="stage-dot" data-stage="3">3<br><small>Mission</small></div>
+                <div class="stage-dot" data-stage="2">2<br><small>Dialogues</small></div>
+                <div class="stage-dot" data-stage="3">3<br><small>Route</small></div>
             </div>
         </div>
         <div class="score-board"><span class="score-label">Score:</span><span class="score-value" id="score">0</span></div>
@@ -42,42 +42,34 @@
             <button class="next-button" id="stage1Next" onclick="goToStage(2)" style="display:none;">Next Stage → 🚀</button>
         </section>
 
-        <!-- STAGE 2 -->
+        <!-- STAGE 2: Dialogues with map on right -->
         <section id="stage2" class="stage">
             <div class="stage-header">
-                <h2>🧭 Stage 2: Vrai ou Faux ?</h2>
-                <p class="instruction">Look at the map (Paris) and decide if each statement is true or false.</p>
-                <p class="french-hint"><em>Lis la phrase, regarde le plan, choisis Vrai ou Faux.</em></p>
+                <h2>💬 Stage 2: Ask for Directions</h2>
+                <p class="instruction">Read the question and choose the correct answer.</p>
+                <p class="french-hint"><em>Choisissez la bonne réponse</em></p>
             </div>
-            <div class="mini-map-container" id="miniMapContainer"></div>
-            <div class="question-container">
-                <div class="question-box">
-                    <span class="question-icon">❓</span>
-                    <h3 id="questionText">Le parc est à côté de la gare SNCF.</h3>
-                </div>
-                <div class="answers-grid" id="answersGrid"></div>
-            </div>
+            <div id="stage2-content"></div>
             <div class="feedback" id="stage2Feedback"></div>
-            <div class="question-counter">Question <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span></div>
+            <div class="question-counter">Dialogue <span id="currentQuestion">1</span> / <span id="totalQuestions">5</span></div>
             <button class="next-button" id="stage2Next" onclick="goToStage(3)" style="display:none;">Final Mission → 🌟</button>
         </section>
 
-        <!-- STAGE 3 -->
+        <!-- STAGE 3: Route on map -->
         <section id="stage3" class="stage">
             <div class="stage-header">
-                <h2>🗺️ Stage 3: Real Navigation Mission</h2>
-                <p class="instruction">Use the map to find locations in Paris!</p>
-                <p class="french-hint"><em>Trouvez les endroits sur la carte de Paris</em></p>
+                <h2>🗺️ Stage 3: Navigate Paris</h2>
+                <p class="instruction">Follow the route from the Eiffel Tower to the restaurant, supermarket, and bakery.</p>
+                <p class="french-hint"><em>Suivez l'itinéraire sur la carte</em></p>
             </div>
             <div class="mission-briefing">
-                <div class="character-avatar">🧳</div>
+                <div class="character-avatar">🗼</div>
                 <div class="mission-text">
-                    <h3>Mission from Tourist Martin:</h3>
-                    <p id="missionText">"Bonjour! I need to find the bakery. Can you help me locate <strong>la boulangerie</strong> on the map?"</p>
+                    <h3>Paris Route Challenge:</h3>
+                    <p id="missionText">"Follow the route from the Eiffel Tower to the restaurant, then to the supermarket, and finally to the bakery!"</p>
                 </div>
             </div>
             <div id="map" class="leaflet-map"></div>
-            <div class="dialogue-container" id="dialogueContainer"></div>
             <div class="feedback" id="stage3Feedback"></div>
             <button class="next-button" id="stage3Complete" onclick="showVictory()" style="display:none;">Claim Your Badge! 🏆</button>
         </section>
