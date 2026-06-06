@@ -1,1 +1,67 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocket City: French Adventure</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="welcome-container">
+        <img src="assets/logo.png" alt="Rocket City Logo" class="welcome-logo">
+        
+        <div class="cover-image-container">
+            <img src="assets/cover.png" alt="Rocket City Map" class="cover-image">
+            <div class="overlay-gradient"></div>
+        </div>
+        
+        <div class="welcome-content">
+            <h1 class="game-title">🚀 Rocket City Explorer</h1>
+            <p class="tagline">Navigate the city. Learn French. Become a guide!</p>
+            
+            <div class="mission-info">
+                <div class="info-card">
+                    <span class="info-icon">🎯</span>
+                    <div>
+                        <h3>Mission</h3>
+                        <p>Find places, ask for directions, help citizens of Rocket City</p>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <span class="info-icon">📚</span>
+                    <div>
+                        <h3>Level</h3>
+                        <p>French A1 • English Instructions</p>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <span class="info-icon">🏆</span>
+                    <div>
+                        <h3>Reward</h3>
+                        <p>Earn the "Rocket City Guide" badge!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="start-button" onclick="startGame()">
+                <span class="button-text">Start Your Adventure</span>
+                <span class="button-emoji">🎮</span>
+            </button>
+            
+            <div class="instructions-hint">
+                <p><small>💡 Tip: Enable sound for the best experience!</small></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function startGame() {
+            window.location.href = 'game.html';
+        }
+    </script>
+</body>
+</html>
