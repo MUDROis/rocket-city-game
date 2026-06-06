@@ -39,7 +39,7 @@ const mapLocations = [
     },
     {
         name: 'La Gare',
-        french: 'la gare SNCF',
+        french: 'la gare',
         lat: 48.8809,
         lng: 2.3553,
         dialogue: {
@@ -81,7 +81,7 @@ function initStage1() {
     
     const buildings = [
         { icon: '🎬', label: 'Cinema', building: 'cinema', french: 'le cinéma' },
-        { icon: '🚆', label: 'Train Station', building: 'gare', french: 'la gare SNCF' },
+        { icon: '🚆', label: 'Train Station', building: 'gare', french: 'la gare' },
         { icon: '🛒', label: 'Supermarket', building: 'supermarche', french: 'le supermarché' },
         { icon: '🥖', label: 'Bakery', building: 'boulangerie', french: 'la boulangerie' },
         { icon: '🌳', label: 'Park', building: 'parc', french: 'le parc' },
@@ -160,9 +160,9 @@ function initStage2() {
 function createStaticMap() {
     const container = document.getElementById('miniMapContainer');
     container.innerHTML = `
-        <h3>🗺️ Twinklville Map - Plan de Twinklville</h3>
+        <h3>🗺️ Map - Plan de ville</h3>
         <div style="text-align: center; margin: 1rem 0;">
-            <img src="assets/map.png" alt="Twinklville Map" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <img src="assets/map.png" alt="Map" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         </div>
         <p class="map-legend"><small>Use this map to answer the questions (Vrai / Faux).</small></p>
     `;
